@@ -1,29 +1,57 @@
 from math import log as ln, exp
+from currency import Currency
+from percent import Percent
+from util import number
 
 
-def pper(i: float) -> None:
-    print(f"{i*100:.2f}%")
+def mulp(i: number | Percent, j: number | Percent) -> Percent:
+    i = Percent(i)
+    j = Percent(j)
+    return (1+i).mul(1+j) - 1
 
 
-def mul_i(i: float, j: float) -> float:
-    return (i+1)*(j+1) - 1
+def divp(i: number | Percent, j: number | Percent) -> Percent:
+    i = Percent(i)
+    j = Percent(j)
+    return Percent((1+i).div(1+j) - 1)
 
 
-def div_i(i: float, j: float) -> float:
-    return (i+1)/(j+1) - 1
-
-
-def PV(i: float, nper: float, fv: float) -> float:
+def PV(
+    i: number | Percent,
+    nper: number,
+    fv: number | Currency,
+) -> Currency:
+    fv = Currency(fv)
+    i = Percent(i)
     return fv / (1+i)**nper
 
     
-def FV(i: float, nper: float, pv: float) -> float:
+def FV(
+    i: number | Percent,
+    nper: number,
+    pv: number | Currency,
+) -> Currency:
+    i = Percent(i)
+    pv = Currency(pv)
     return pv * (1+i)**nper
 
 
-def NPER(i: float, pv: float, fv: float) -> float:
-    return ln(fv/pv) / ln(1+i)
+def NPER(
+    i: number | Percent,
+    pv: number | Currency,
+    fv: number | Currency,
+) -> float:
+    i = Percent(i)
+    pv = Currency(pv)
+    fv = Currency(fv)
+    return ln(fv.div(pv)) / ln((1+i).value)
 
 
-def RATE(nper: float, pv: float, fv: float) -> float:
-    return exp(ln(fv/pv) / nper) - 1
+def RATE(
+    nper: number,
+    pv: number | Currency,
+    fv: number | Currency,
+) -> float:
+    pv = Currency(pv)
+    fv = Currency(fv)
+    return exp(ln(fv.div(pv)) / nper) - 1
