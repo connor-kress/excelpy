@@ -54,7 +54,10 @@ class Currency:
         return self.__class__(-self.value)
 
     def __repr__(self) -> str:
-        return f"${self.value:.2f}"
+        if self.value < 0:
+            return f"-${-self.value:.2f}"
+        else:
+            return f"${self.value:.2f}"
 
     def __str__(self) -> str:
         return repr(self)
