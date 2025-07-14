@@ -14,12 +14,16 @@ class Percent:
         self.value = float(value)
 
     def __add__(self, other: Self | number) -> Self:
+        if not isinstance(other, self.__class__ | number):
+            return NotImplemented
         return self.__class__(self.value + get_value(other))
 
     def __radd__(self, other: number) -> Self:
         return self + other
     
     def __sub__(self, other: Self | number) -> Self:
+        if not isinstance(other, self.__class__ | number):
+            return NotImplemented
         return self.__class__(self.value - get_value(other))
 
     def __rsub__(self, other: number) -> Self:
@@ -27,7 +31,7 @@ class Percent:
 
     def __mul__(self, other: number) -> Self:
         if not other.__class__ in (float, int):
-            return other.__mul__(self) # type: ignore
+            return NotImplemented
         return self.__class__(self.value * other)
 
     def __rmul__(self, other: number) -> Self:

@@ -1,4 +1,5 @@
 from functools import partial
+from itertools import zip_longest
 from typing import Iterable, Self
 from currency import Currency
 from percent import Percent
@@ -26,8 +27,10 @@ class Span:
 
     def __add__(self, other: Self | Value) -> Self:
         if isinstance(other, Span):
-            new_items = [add_values(a, b)
-                         for a, b in zip(self.items, other.items)]
+            new_items = [
+                add_values(a, b)
+                for a, b in zip_longest(self.items, other.items, fillvalue=0)
+            ]
         else:
             new_items = list(map(partial(add_values, b=other), self.items))
         return self.__class__(new_items)
@@ -75,4 +78,5 @@ class Span:
 
 if __name__ == "__main__":
     s = Span([1, 2, 300, Currency(100), Percent(0.1)])
-    print(s)
+    u = Span([1, 2, 3, 4, 5])
+    v = Span([1, 2, 3, 4, 5, 6])
