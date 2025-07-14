@@ -1,7 +1,7 @@
 from typing import Protocol
 
 
-type number = float | int
+number = float | int
 
 
 class HasValue(Protocol):
@@ -9,7 +9,7 @@ class HasValue(Protocol):
 
 
 def get_value(obj: number | HasValue) -> float:
-    if isinstance(obj, float | int):
+    if isinstance(obj, number):
         return obj
     else:
         return obj.value

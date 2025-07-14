@@ -1,4 +1,4 @@
-from typing import Self
+from typing import Any, Self
 from percent import Percent
 from util import get_value, number
 
@@ -13,7 +13,14 @@ class Currency:
         if isinstance(value, Currency):
             return
         self.value = float(value)
-        
+
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, self.__class__ | Percent | number):
+            raise TypeError(
+                f"Cannot compare {self.__class__} to {other.__class__}"
+            )
+        return self.value == get_value(other)
+
     def __add__(self, other: Self | number) -> Self:
         return self.__class__(self.value + get_value(other))
 

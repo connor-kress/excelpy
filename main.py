@@ -2,6 +2,7 @@ from math import log as ln, exp
 from currency import Currency
 from percent import Percent
 from util import get_value, number
+from span import Span
 
 
 def mulp(i__: number | Percent, j__: number | Percent) -> Percent:
