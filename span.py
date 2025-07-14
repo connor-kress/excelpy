@@ -1,6 +1,6 @@
 from functools import partial
 from itertools import zip_longest
-from typing import Iterable, Self
+from typing import Iterable, Iterator, Self
 from currency import Currency
 from percent import Percent
 from util import get_value, number
@@ -74,6 +74,18 @@ class Span:
 
     def __str__(self) -> str:
         return repr(self)
+
+    def __iter__(self) -> Iterator[Value]:
+        return iter(self.items)
+
+    def as_currency(self) -> Self:
+        return self.__class__([Currency(get_value(item)) for item in self.items])
+
+    def as_percent(self) -> Self:
+        return self.__class__([Percent(get_value(item)) for item in self.items])
+
+    def as_number(self) -> Self:
+        return self.__class__([get_value(item) for item in self.items])
 
 
 if __name__ == "__main__":
