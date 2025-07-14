@@ -8,7 +8,7 @@ class HasValue(Protocol):
     value: float
 
 
-def get_value(obj: HasValue | float | int) -> float:
+def get_value(obj: number | HasValue) -> float:
     if isinstance(obj, float | int):
         return obj
     else:

@@ -1,2 +1,6 @@
 # Python cache directory
 __pycache__
+
+# Excel files (for testing)
+*.xlsx
+*.xlsx#
