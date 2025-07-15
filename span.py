@@ -19,27 +19,27 @@ def add_values(a: Value, b: Value) -> Value:
 
 
 class Span:
-    def __init__(self, items: Iterable[Value]):
-        for item in items:
-            if not isinstance(item, Value):
-                raise TypeError("items must be a number, Currency, or Percent")
-        self.items = list(items)
+    def __init__(self, values: Iterable[Value]):
+        self.values = list(values)
+        for val in self.values:
+            if not isinstance(val, Value):
+                raise TypeError("Span values must be of a numeric type.")
 
     def __add__(self, other: Self | Value) -> Self:
         if isinstance(other, Span):
             new_items = [
                 add_values(a, b)
-                for a, b in zip_longest(self.items, other.items, fillvalue=0)
+                for a, b in zip_longest(self.values, other.values, fillvalue=0)
             ]
         else:
-            new_items = list(map(partial(add_values, b=other), self.items))
+            new_items = map(partial(add_values, b=other), self.values)
         return self.__class__(new_items)
 
     def __radd__(self, other: Self | Value) -> Self:
         return self.__add__(other)
 
     def __neg__(self) -> Self:
-        return self.__class__([-item for item in self.items])
+        return self.__class__([-item for item in self.values])
 
     def __sub__(self, other: Self | Value) -> Self:
         return self.__add__(-other)
@@ -48,19 +48,23 @@ class Span:
         return (-self).__add__(other)
 
     def __mul__(self, other: Value) -> Self:
-        return self.__class__([item*get_value(other) for item in self.items])
+        return self.__class__([item*get_value(other) for item in self.values])
     
     def __rmul__(self, other: Value) -> Self:
         return self.__mul__(other)
     
     def __truediv__(self, other: Value) -> Self:
-        return self.__class__([item/get_value(other) for item in self.items])
+        return self.__class__([item/get_value(other) for item in self.values])
 
     def __pow__(self, other: Value) -> Self:
-        return self.__class__([item**get_value(other) for item in self.items])
+        return self.__class__([item**get_value(other) for item in self.values])
     
     def __repr__(self) -> str:
-        item_strs = list(map(str, self.items))
+        if len(self.values) == 0:
+            return "┌───────┐\n" \
+                   "│ Empty │\n" \
+                   "└───────┘"
+        item_strs = list(map(str, self.values))
         max_len = max(map(len, item_strs))
         delimiter = "├" + "─"*(max_len+2) + "┤\n"
         s = "┌" + "─"*(max_len+2) + "┐\n"
@@ -76,25 +80,25 @@ class Span:
         return repr(self)
 
     def __iter__(self) -> Iterator[Value]:
-        return iter(self.items)
-
-    def as_currency(self) -> Self:
-        return self.__class__([Currency(get_value(item)) for item in self.items])
-
-    def as_percent(self) -> Self:
-        return self.__class__([Percent(get_value(item)) for item in self.items])
-
-    def as_number(self) -> Self:
-        return self.__class__([get_value(item) for item in self.items])
+        return iter(self.values)
 
     def iter_currency(self) -> Generator[Currency]:
-        return (Currency(get_value(item)) for item in self.items)
+        return (Currency(get_value(item)) for item in self.values)
 
     def iter_percent(self) -> Generator[Percent]:
-        return (Percent(get_value(item)) for item in self.items)
+        return (Percent(get_value(item)) for item in self.values)
 
     def iter_number(self) -> Generator[number]:
-        return (get_value(item) for item in self.items)
+        return (get_value(item) for item in self.values)
+
+    def as_currency(self) -> Self:
+        return self.__class__(self.iter_currency())
+
+    def as_percent(self) -> Self:
+        return self.__class__(self.iter_percent())
+
+    def as_number(self) -> Self:
+        return self.__class__(self.iter_number())
 
 
 if __name__ == "__main__":
