@@ -107,15 +107,25 @@ class Span:
         return sum(self)
 
     def mean(self) -> Value:
+        if len(self) == 0:
+            raise ValueError("Cannot calculate mean of empty set.")
         return sum(self) / len(self)
 
     def var_p(self) -> Value:
         """Calculates the population variance."""
+        if len(self) == 0:
+            raise ValueError(
+                "Cannot calculated population variance of empty set."
+            )
         mean = get_value(self.mean())
         return sum((val - mean)**2 for val in self) / len(self)
 
     def var_s(self) -> Value:
         """Calculates the sample variance."""
+        if len(self) < 2:
+            raise ValueError(
+                "Sample variance requires at least 2 data points."
+            )
         mean = get_value(self.mean())
         return sum((val - mean)**2 for val in self) / (len(self) - 1)
 
