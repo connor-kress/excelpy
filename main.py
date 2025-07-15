@@ -1,14 +1,20 @@
 from math import log as ln, exp
+from typing import Iterable
 from currency import Currency
 from percent import Percent
 from util import get_value, number
-from span import Span
+from span import Span, Value
 
 
-def NPV(rate: number | Percent, values: Span) -> Currency:
+def NPV(
+    rate: number | Percent,
+    values: Span | Iterable[Value],
+    legacy: bool = False,
+) -> Currency:
+    offset = 1 if legacy else 0
     return -Currency(sum((
-        PV(rate, i+1, fv=value)
-        for i, value in enumerate(values.iter_currency())
+        PV(rate, i+offset, fv=value)
+        for i, value in enumerate(Span(values).iter_currency())
     )))
 
 
