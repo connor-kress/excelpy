@@ -5,6 +5,13 @@ from util import get_value, number
 from span import Span
 
 
+def NPV(rate: number | Percent, values: Span) -> Currency:
+    return -Currency(sum((
+        PV(rate, i+1, fv=value)
+        for i, value in enumerate(values.iter_currency())
+    )))
+
+
 def mulp(i__: number | Percent, j__: number | Percent) -> Percent:
     i = get_value(i__)
     j = get_value(j__)
