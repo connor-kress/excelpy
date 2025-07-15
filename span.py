@@ -1,3 +1,18 @@
+"""
+References:
+- https://en.wikipedia.org/wiki/Box-drawing_characters
+┌─┬─┐╷╭─┬─╮
+├─┼─┤│├─┼─┤╶╴
+└─┴─┘╵╰─┴─╯
+┏━━━┯━━━┯━━━┓
+┃ A │ B │ C ┃
+┣━━━┿━━━┿━━━┫
+┃ 1 │ 2 │ 3 ┃
+┠───┼───┼───┨
+┃ 4 │ 5 │ 6 ┃
+┗━━━┷━━━┷━━━┛
+"""
+
 from functools import partial
 from itertools import zip_longest
 from typing import Generator, Iterable, Iterator, Self
@@ -27,19 +42,19 @@ class Span:
 
     def __add__(self, other: Self | Value) -> Self:
         if isinstance(other, Span):
-            new_items = [
+            new_values = [
                 add_values(a, b)
-                for a, b in zip_longest(self.values, other.values, fillvalue=0)
+                for a, b in zip_longest(self, other, fillvalue=0)
             ]
         else:
-            new_items = map(partial(add_values, b=other), self.values)
-        return self.__class__(new_items)
+            new_values = map(partial(add_values, b=other), self)
+        return self.__class__(new_values)
 
     def __radd__(self, other: Self | Value) -> Self:
         return self.__add__(other)
 
     def __neg__(self) -> Self:
-        return self.__class__([-item for item in self.values])
+        return self.__class__(-val for val in self)
 
     def __sub__(self, other: Self | Value) -> Self:
         return self.__add__(-other)
@@ -48,29 +63,29 @@ class Span:
         return (-self).__add__(other)
 
     def __mul__(self, other: Value) -> Self:
-        return self.__class__([item*get_value(other) for item in self.values])
+        return self.__class__(val*get_value(other) for val in self)
     
     def __rmul__(self, other: Value) -> Self:
         return self.__mul__(other)
     
     def __truediv__(self, other: Value) -> Self:
-        return self.__class__([item/get_value(other) for item in self.values])
+        return self.__class__(val/get_value(other) for val in self)
 
     def __pow__(self, other: Value) -> Self:
-        return self.__class__([item**get_value(other) for item in self.values])
+        return self.__class__(val**get_value(other) for val in self)
     
     def __repr__(self) -> str:
-        if len(self.values) == 0:
+        if len(self) == 0:
             return "┌───────┐\n" \
                    "│ Empty │\n" \
                    "└───────┘"
-        item_strs = list(map(str, self.values))
-        max_len = max(map(len, item_strs))
+        val_strs = list(map(str, self))
+        max_len = max(map(len, val_strs))
         delimiter = "├" + "─"*(max_len+2) + "┤\n"
         s = "┌" + "─"*(max_len+2) + "┐\n"
-        for i, item_str in enumerate(item_strs):
-            s += f"│ {item_str:>{max_len}} │\n"
-            if i < len(item_strs) - 1:
+        for i, val_str in enumerate(val_strs):
+            s += f"│ {val_str:>{max_len}} │\n"
+            if i < len(self) - 1:
                 s += delimiter
             else:
                 s += "└" + "─"*(max_len+2) + "┘"
@@ -82,14 +97,44 @@ class Span:
     def __iter__(self) -> Iterator[Value]:
         return iter(self.values)
 
+    def __len__(self) -> int:
+        return len(self.values)
+
+    def len(self) -> int:
+        return len(self)
+
+    def sum(self) -> Value:
+        return sum(self)
+
+    def mean(self) -> Value:
+        return sum(self) / len(self)
+
+    def var_p(self) -> Value:
+        """Calculates the population variance."""
+        mean = get_value(self.mean())
+        return sum((val - mean)**2 for val in self) / len(self)
+
+    def var_s(self) -> Value:
+        """Calculates the sample variance."""
+        mean = get_value(self.mean())
+        return sum((val - mean)**2 for val in self) / (len(self) - 1)
+
+    def stdev_p(self) -> Value:
+        """Calculates the population standard deviation."""
+        return self.var_p()**0.5
+
+    def stdev_s(self) -> Value:
+        """Calculates the sample standard deviation."""
+        return self.var_s()**0.5
+
     def iter_currency(self) -> Generator[Currency]:
-        return (Currency(get_value(item)) for item in self.values)
+        return (Currency(get_value(val)) for val in self)
 
     def iter_percent(self) -> Generator[Percent]:
-        return (Percent(get_value(item)) for item in self.values)
+        return (Percent(get_value(val)) for val in self)
 
     def iter_number(self) -> Generator[number]:
-        return (get_value(item) for item in self.values)
+        return (get_value(val) for val in self)
 
     def as_currency(self) -> Self:
         return self.__class__(self.iter_currency())
