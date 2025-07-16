@@ -4,6 +4,7 @@ from currency import Currency
 from percent import Percent
 from util import get_value, number
 from span import Span, Value
+from table import Table
 
 
 def NPV(

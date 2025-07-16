@@ -1,18 +1,3 @@
-"""
-References:
-- https://en.wikipedia.org/wiki/Box-drawing_characters
-┌─┬─┐╷╭─┬─╮
-├─┼─┤│├─┼─┤╶╴
-└─┴─┘╵╰─┴─╯
-┏━━━┯━━━┯━━━┓
-┃ A │ B │ C ┃
-┣━━━┿━━━┿━━━┫
-┃ 1 │ 2 │ 3 ┃
-┠───┼───┼───┨
-┃ 4 │ 5 │ 6 ┃
-┗━━━┷━━━┷━━━┛
-"""
-
 import math
 import operator
 from functools import partial, reduce
