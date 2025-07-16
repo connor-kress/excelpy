@@ -1,40 +1,28 @@
 import math
 import operator
-from functools import partial, reduce
+from functools import reduce
 from itertools import zip_longest
 from typing import Generator, Iterable, Iterator, Self
 from currency import Currency
 from percent import Percent
 from util import get_value, number
-
-
-Value = number | Currency | Percent
-
-
-def add_values(a: Value, b: Value) -> Value:
-    if isinstance(a, Currency) and isinstance(b, Percent):
-        return Currency(a.value + b.value)
-    elif isinstance(a, Percent) and isinstance(b, Currency):
-        return Percent(a.value + b.value)
-    else:
-        return a + b # type: ignore
+from value import Value, ValueType
 
 
 class Span:
-    def __init__(self, values: Iterable[Value]):
-        self.values = list(values)
+    def __init__(self, values: Iterable[Value | ValueType]):
+        self.values = list(map(Value, values))
         for val in self.values:
             if not isinstance(val, Value):
                 raise TypeError("Span values must be of a numeric type.")
 
     def __add__(self, other: Self | Value) -> Self:
         if isinstance(other, Span):
-            new_values = [
-                add_values(a, b)
-                for a, b in zip_longest(self, other, fillvalue=0)
-            ]
+            new_values = (
+                a + b for a, b in zip_longest(self, other, fillvalue=0)
+            )
         else:
-            new_values = map(partial(add_values, b=other), self)
+            new_values = (a + other for a in self)
         return self.__class__(new_values)
 
     def __radd__(self, other: Self | Value) -> Self:
@@ -94,18 +82,20 @@ class Span:
         self.values.clear()
 
     def copy(self) -> Self:
-        def copy_val(val: Value) -> Value:
-            if isinstance(val, number):
-                return val
-            else:
-                return val.copy()
-        return self.__class__(map(copy_val, self))
+        return self.__class__(val.copy() for val in self)
+
+    def convert_inferred_type(self, val: float) -> Value:
+        """Converts a float to the inferred type of the Span."""
+        ret_cls = self.values[0].data.__class__
+        if ret_cls.__name__ == "int":
+            ret_cls = float
+        return Value(ret_cls(val))
 
     def sort(self) -> None:
-        self.values.sort(key=get_value)
+        self.values.sort(key=Value.get_value)
 
     def sorted(self) -> Self:
-        return self.__class__(sorted(self, key=get_value))
+        return self.__class__(sorted(self, key=Value.get_value))
 
     def reverse(self) -> None:
         self.values.reverse()
@@ -115,7 +105,7 @@ class Span:
         return self.__class__(reversed(values))
 
     def sum(self) -> Value:
-        return sum(self)
+        return sum(self, Value(0))
 
     def prod(self) -> Value:
         return reduce(operator.mul, self, 1)
@@ -123,33 +113,35 @@ class Span:
     def mean(self) -> Value:
         if len(self) == 0:
             raise ValueError("Cannot calculate mean of empty set.")
-        return sum(self) / len(self)
+        return self.sum() / len(self)
 
-    def var_p(self) -> Value:
+    def var_p(self) -> float:
         """Calculates the population variance."""
         if len(self) == 0:
             raise ValueError(
                 "Cannot calculated population variance of empty set."
             )
-        mean = get_value(self.mean())
-        return sum((val - mean)**2 for val in self) / len(self)
+        mean = self.mean().get_value()
+        return sum((val - mean)**2 for val in self.iter_number()) / len(self)
 
-    def var_s(self) -> Value:
+    def var_s(self) -> float:
         """Calculates the sample variance."""
         if len(self) < 2:
             raise ValueError(
                 "Sample variance requires at least 2 data points."
             )
-        mean = get_value(self.mean())
-        return sum((val - mean)**2 for val in self) / (len(self) - 1)
+        mean = self.mean().get_value()
+        return sum(
+            (val - mean)**2 for val in self.iter_number()
+        ) / (len(self) - 1)
 
     def stdev_p(self) -> Value:
         """Calculates the population standard deviation."""
-        return self.var_p()**0.5
+        return self.convert_inferred_type(self.var_p()**0.5)
 
     def stdev_s(self) -> Value:
         """Calculates the sample standard deviation."""
-        return self.var_s()**0.5
+        return self.convert_inferred_type(self.var_s()**0.5)
 
     def quantile(self, q: float) -> Value:
         """Calculates the quantile of the data using the
@@ -160,31 +152,28 @@ class Span:
             raise ValueError("Cannot calculate quantile of empty set.")
         if not 0 <= q <= 1:
             raise ValueError("Quantile must be between 0 and 1.")
-        ret_cls = self.values[0].__class__
-        if ret_cls.__name__ == "int":
-            ret_cls = float
         values = sorted(self.iter_number())
         if n == 1:
-            return ret_cls(values[0])
+            return self.convert_inferred_type(values[0])
         h = (n - 1) * q
         i = int(math.floor(h))
         f = h - i
         if f == 0:
-            return ret_cls(values[i])
+            return self.convert_inferred_type(values[i])
         res = values[i] * (1 - f) + values[i + 1] * f
-        return ret_cls(res)
+        return self.convert_inferred_type(res)
 
     def median(self) -> Value:
         return self.quantile(0.5)
 
     def iter_currency(self) -> Generator[Currency]:
-        return (Currency(get_value(val)) for val in self)
+        return (Currency(val.get_value()) for val in self)
 
     def iter_percent(self) -> Generator[Percent]:
-        return (Percent(get_value(val)) for val in self)
+        return (Percent(val.get_value()) for val in self)
 
     def iter_number(self) -> Generator[number]:
-        return (get_value(val) for val in self)
+        return (val.get_value() for val in self)
 
     def as_currency(self) -> Self:
         return self.__class__(self.iter_currency())

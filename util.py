@@ -1,4 +1,4 @@
-from typing import Protocol
+from typing import Any, Protocol
 
 
 number = float | int
@@ -8,8 +8,14 @@ class HasValue(Protocol):
     value: float
 
 
-def get_value(obj: number | HasValue) -> float:
+class HasData(Protocol):
+    data: Any
+
+
+def get_value(obj: number | HasValue | HasData) -> float:
     if isinstance(obj, number):
         return obj
-    else:
-        return obj.value
+    try:
+        return obj.value # type: ignore
+    except AttributeError:
+        return obj.data.value # type: ignore
