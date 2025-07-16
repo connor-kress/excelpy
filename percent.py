@@ -63,3 +63,6 @@ class Percent:
 
     def __str__(self) -> str:
         return repr(self)
+
+    def copy(self) -> Self:
+        return self.__class__(self.value)

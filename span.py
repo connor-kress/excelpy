@@ -13,7 +13,9 @@ References:
 ┗━━━┷━━━┷━━━┛
 """
 
-from functools import partial
+import math
+import operator
+from functools import partial, reduce
 from itertools import zip_longest
 from typing import Generator, Iterable, Iterator, Self
 from currency import Currency
@@ -103,8 +105,35 @@ class Span:
     def len(self) -> int:
         return len(self)
 
+    def clear(self) -> None:
+        self.values.clear()
+
+    def copy(self) -> Self:
+        def copy_val(val: Value) -> Value:
+            if isinstance(val, number):
+                return val
+            else:
+                return val.copy()
+        return self.__class__(map(copy_val, self))
+
+    def sort(self) -> None:
+        self.values.sort(key=get_value)
+
+    def sorted(self) -> Self:
+        return self.__class__(sorted(self, key=get_value))
+
+    def reverse(self) -> None:
+        self.values.reverse()
+
+    def reversed(self) -> Self:
+        values = self.values
+        return self.__class__(reversed(values))
+
     def sum(self) -> Value:
         return sum(self)
+
+    def prod(self) -> Value:
+        return reduce(operator.mul, self, 1)
 
     def mean(self) -> Value:
         if len(self) == 0:
@@ -136,6 +165,32 @@ class Span:
     def stdev_s(self) -> Value:
         """Calculates the sample standard deviation."""
         return self.var_s()**0.5
+
+    def quantile(self, q: float) -> Value:
+        """Calculates the quantile of the data using the
+        weighted average of the two nearest values.
+        """
+        n = len(self)
+        if n == 0:
+            raise ValueError("Cannot calculate quantile of empty set.")
+        if not 0 <= q <= 1:
+            raise ValueError("Quantile must be between 0 and 1.")
+        ret_cls = self.values[0].__class__
+        if ret_cls.__name__ == "int":
+            ret_cls = float
+        values = sorted(self.iter_number())
+        if n == 1:
+            return ret_cls(values[0])
+        h = (n - 1) * q
+        i = int(math.floor(h))
+        f = h - i
+        if f == 0:
+            return ret_cls(values[i])
+        res = values[i] * (1 - f) + values[i + 1] * f
+        return ret_cls(res)
+
+    def median(self) -> Value:
+        return self.quantile(0.5)
 
     def iter_currency(self) -> Generator[Currency]:
         return (Currency(get_value(val)) for val in self)
