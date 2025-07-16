@@ -6,6 +6,7 @@ References:
 └─┴─┘╵╰─┴─╯
 """
 
+from typing import Self
 from span import Span
 
 
@@ -14,6 +15,14 @@ class Table:
         self.cols = cols
         self.header = header
         self.validate_state()
+
+    @classmethod
+    def from_pairs(cls, *pairs: tuple[str, Span]) -> Self:
+        """Creates a new table from pairs of header labels and spans."""
+        return cls(
+            [col for _, col in pairs],
+            [label for label, _ in pairs],
+        )
 
     def validate_state(self) -> None:
         if len(self.cols) == 0:
@@ -82,12 +91,9 @@ class Table:
 
 
 if __name__ == "__main__":
-    t = Table(
-        [
-            Span([1, 2, 3]),
-            Span([4, 5, 6]).as_currency(),
-            Span([7, 8, 9]).as_percent(),
-        ],
-        ["Year", "Cash Flow", "idk"],
+    tb = Table.from_pairs(
+        ("Year", Span([1, 2, 3])),
+        ("Cash Flow", Span([4, 5, 6]).as_currency()),
+        ("idk", Span([7, 8, 9]).as_percent()),
     )
-    print(t)
+    print(tb)
