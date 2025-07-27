@@ -6,7 +6,6 @@ from typing import Self
 
 ValueType = number | Currency | Percent
 
-
 class Value:
     def __init__(self, data: Self | ValueType):
         if isinstance(data, self.__class__):
@@ -72,3 +71,26 @@ class Value:
 
     def get_value(self) -> number:
         return get_value(self.data)
+
+    def clamp(self, b: Self | ValueType, t: Self | ValueType) -> Self:
+        self_val = self.data
+        b_val = b.data if isinstance(b, self.__class__) else b
+        t_val = t.data if isinstance(t, self.__class__) else t
+        ret_cls = self_val.__class__
+        if ret_cls.__name__ == "int"  and (
+            b_val.__class__.__name__ != "int" or
+            t_val.__class__.__name__ != "int"
+        ):
+            ret_cls = float
+        return self.__class__(ret_cls(
+            min(
+                max(get_optional_value(self), get_optional_value(b)),
+                get_optional_value(t),
+            )
+        ))
+
+def get_optional_value(val: Value | ValueType) -> number:
+    if isinstance(val, Value):
+        return get_value(val.data)
+    else:
+        return get_value(val)

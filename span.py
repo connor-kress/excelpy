@@ -104,6 +104,11 @@ class Span:
         values = self.values
         return self.__class__(reversed(values))
 
+    def clamp(self, b: Value, t: Value) -> Self:
+        return self.__class__(
+            val.clamp(b, t) for val in self
+        )
+
     def sum(self) -> Value:
         return sum(self, Value(0))
 
