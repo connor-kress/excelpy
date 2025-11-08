@@ -6,7 +6,7 @@ References:
 └─┴─┘╵╰─┴─╯
 """
 
-from typing import Self
+from typing import Iterable, Self
 from span import Span
 
 
@@ -17,7 +17,7 @@ class Table:
         self.validate_state()
 
     @classmethod
-    def from_pairs(cls, *pairs: tuple[str, Span]) -> Self:
+    def from_pairs(cls, pairs: Iterable[tuple[str, Span]]) -> Self:
         """Creates a new table from pairs of header labels and spans."""
         return cls(
             [col for _, col in pairs],
